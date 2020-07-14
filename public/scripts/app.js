@@ -163,7 +163,19 @@ function getForecastFromNetwork(coords) {
  */
 function getForecastFromCache(coords) {
   // CODELAB: Add code to get weather forecast from the caches object.
+  if (!('caches' in window)) {
+    return null;
+  }
 
+  const url = `${window.location.origin}/forecast/${coords}`;
+  return caches.match(url)
+    .then((response) => {
+      return response && response.json() || null;
+    })
+    .catch((error) => {
+      console.error('Error getting data from cache', error);
+      return null;
+    });
 }
 
 /**
@@ -198,7 +210,11 @@ function updateData() {
     const location = weatherApp.selectedLocations[key];
     const card = getForecastCard(location);
     // CODELAB: Add code to call getForecastFromCache
-
+    getForecastFromCache(location.geo)
+      .then((forecast) => {
+        renderForecast(card, forecast);
+      });
+    
     // Get the forecast data from the network.
     getForecastFromNetwork(location.geo)
         .then((forecast) => {
