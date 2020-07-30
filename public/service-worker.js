@@ -47,15 +47,15 @@ const FILES_TO_CACHE = [
   '/images/wind.svg',
 ];
 
-self.addEventListener('install', (evt) => {
+async function precache() {
+  console.log('[ServiceWorker] Pre-caching offline page');
+  const cache = await caches.open(CACHE_NAME);
+  return await cache.addAll(FILES_TO_CACHE);
+}
+
+self.addEventListener('install', async (event) => {
   console.log('[ServiceWorker] Install');
-  // CODELAB: Precache static resources here.
-  evt.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Pre-caching offline page');
-      return cache.addAll(FILES_TO_CACHE);
-    })
-  );
+  event.waitUntil(precache());
   self.skipWaiting();
 });
 
