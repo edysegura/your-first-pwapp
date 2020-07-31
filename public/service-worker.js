@@ -78,33 +78,29 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (evt) => {
-  // console.log('[ServiceWorker] Fetch', evt.request.url);
-  // CODELAB: Add fetch event handler here.
-  if (evt.request.url.includes('/forecast/')) {
-    evt.respondWith(
-      caches.open(DATA_CACHE_NAME)
-        .then((cache) => {
-          return fetch(evt.request)
-            .then((response) => {
-              response.status === 200 && cache.put(evt.request.url, response.clone());
-              return response;
-            })
-            .catch((error) => {
-              return cache.match(evt.request);
-            });
-        })
-        .catch()
-    );
+async function fetchFromNetworkFirst(request) {
+  const cache = await caches.open(DATA_CACHE_NAME);
+  try {
+    const response = await fetch(request);
+    response.status === 200 && cache.put(request.url, response.clone());
+    return response;
+  } catch (_) {
+    return cache.match(request);
+  }
+}
+
+self.addEventListener('fetch', async (event) => {
+  if (event.request.url.includes('/forecast/')) {
+    event.respondWith(fetchFromNetworkFirst(event.request));
     return;
   }
 
-  evt.respondWith(
+  event.respondWith(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        return cache.match(evt.request)
+        return cache.match(event.request)
           .then((response) => {
-            return response || fetch(evt.request);
+            return response || fetch(event.request);
           })
       })
       .catch(error => console.log('OMG!', error), null)
