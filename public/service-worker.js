@@ -18,7 +18,7 @@
 'use strict';
 
 // CODELAB: Update cache names any time any of the cached files change.
-const CACHE_NAME = 'static-cache-v2';
+const CACHE_NAME = 'static-cache-v1';
 const DATA_CACHE_NAME = 'data-cache-v1';
 
 // CODELAB: Add list of files to cache here.
@@ -50,7 +50,7 @@ const FILES_TO_CACHE = [
 async function precache() {
   console.log('[ServiceWorker] Pre-caching offline page');
   const cache = await caches.open(CACHE_NAME);
-  return await cache.addAll(FILES_TO_CACHE);
+  return cache.addAll(FILES_TO_CACHE);
 }
 
 self.addEventListener('install', async (event) => {
@@ -59,19 +59,22 @@ self.addEventListener('install', async (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (evt) => {
+function deleteOlderCache(key) {
+  const cacheList = [ CACHE_NAME, DATA_CACHE_NAME ];
+  if (!cacheList.includes(key)) {
+    console.log('[ServiceWorker] Removing old cache', key);
+    return caches.delete(key);
+  }
+}
+
+async function cleanup() {
+  const keyList = await caches.keys();
+  return Promise.all(keyList.map(deleteOlderCache))
+}
+
+self.addEventListener('activate', (event) => {
   console.log('[ServiceWorker] Activate');
-  // CODELAB: Remove previous cached data from disk.
-  evt.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME && key !== DATA_CACHE_NAME) {
-          console.log('[ServiceWorker] Removing old cache', key);
-          return caches.delete(key);
-        }
-      }));
-    })
-  );
+  event.waitUntil(cleanup());
   self.clients.claim();
 });
 
