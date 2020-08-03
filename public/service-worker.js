@@ -89,20 +89,21 @@ async function fetchFromNetworkFirst(request) {
   }
 }
 
+async function fetchFromCacheFirst(request) {
+  const cache = await caches.open(DATA_CACHE_NAME);
+  try {
+    const response = await cache.match(request);
+    return response || fetch(response);
+  } catch (error) {
+    console.log('Non cache and networkr neighter', error)
+  }
+}
+
 self.addEventListener('fetch', async (event) => {
   if (event.request.url.includes('/forecast/')) {
     event.respondWith(fetchFromNetworkFirst(event.request));
     return;
   }
 
-  event.respondWith(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.match(event.request)
-          .then((response) => {
-            return response || fetch(event.request);
-          })
-      })
-      .catch(error => console.log('OMG!', error), null)
-  );
+  event.respondWith(fetchFromCacheFirst(event.request));
 });
