@@ -69,7 +69,7 @@ function deleteOlderCache(key) {
 
 async function cleanup() {
   const keyList = await caches.keys();
-  return Promise.all(keyList.map(deleteOlderCache))
+  return Promise.all(keyList.map(deleteOlderCache));
 }
 
 self.addEventListener('activate', (event) => {
