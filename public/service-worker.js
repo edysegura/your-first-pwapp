@@ -100,10 +100,9 @@ async function fetchFromCacheFirst(request) {
 }
 
 self.addEventListener('fetch', async (event) => {
-  if (event.request.url.includes('/forecast/')) {
-    event.respondWith(fetchFromNetworkFirst(event.request));
-    return;
-  }
+  const fetchStrategy = event.request.url.includes('/forecast/')
+    ? fetchFromNetworkFirst
+    : fetchFromCacheFirst;
 
-  event.respondWith(fetchFromCacheFirst(event.request));
+  event.respondWith(fetchStrategy(event.request));
 });
